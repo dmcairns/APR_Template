@@ -2,6 +2,7 @@
 # Files to eventually be made into a
 # package.
 #######################################
+library(shiny)
 
 # Degrees Included in the Review Table
   # Level (BS, MS, etc.)
@@ -27,38 +28,18 @@
   # Academic Year, # Assisted, % Assisted, Average Amount
 
 
-createQMD_parameterList_for_APR <- function(theDept, degreesIncluded, table1){
-
-  # Helper function to standardize filtering, NA replacement, and conversion
-  clean_dept_df <- function(df, filter_faculty = TRUE, filter_year = TRUE) {
-    if (is.null(df)) return(data.frame())
-
-    out <- as.data.frame(df)
-
-    if (filter_year && "calYear" %in% names(out)) {
-      out <- out[as.character(out$calYear) == target_year, , drop = FALSE]
-    }
-
-    if (filter_faculty && "Faculty.ID" %in% names(out)) {
-      out <- out[as.character(out$Faculty.ID) == target_id, , drop = FALSE]
-    }
-
-    # Replace NAs cleanly depending on type
-    out %>%
-      dplyr::mutate(dplyr::across(where(is.character), ~ tidyr::replace_na(.x, "-9999"))) %>%
-      dplyr::mutate(dplyr::across(where(is.numeric),   ~ tidyr::replace_na(.x, -9999)))
-  }
+createQMD_parameterList_for_APR <- function(theDept, degreesIncluded, table1, selectedViz = list()){
 
   # Build Parameter Output List
   theOutput <- list(
     theDept                     = if (is.function(theDept)) theDept() else theDept,
     theDegrees                  = if (is.function(degreesIncluded)) degreesIncluded() else degreesIncluded,
-    table1Data                  = if (is.function(table1)) table1() else table1
+    table1Data                  = if (is.function(table1)) table1() else table1,
+    selectedViz                 = if (is.function(selectedViz)) selectedViz() else selectedViz
   )
 
   return(theOutput)
 }
-
 readMetricsLocal <- function(theDept){
   # reads the data from a locally produced excel file
   req(theDept)

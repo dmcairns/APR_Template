@@ -9,6 +9,7 @@ params:
   theDept: "ATMO"
   theDegrees: !expr data.frame()
   table1Data: !expr data.frame()
+  selectedViz: !expr list(retention_trend = TRUE, degrees_awarded = FALSE, scholarly_output = FALSE)
 engine: knitr
 ---
 
@@ -314,6 +315,12 @@ for (singleProgram in allPrograms) {
 
 :::{custom-style="CustomSection-Level3"}
 1\. Analysis
+```{r}
+#| eval: !expr params$selectedViz$retention_trend
+#| echo: false
+
+create5yrTrendRetentionChart(params$table1Data, params$theDept, params$theDegrees)
+```
 :::
 
 :::{custom-style="CustomSection=Level4"}

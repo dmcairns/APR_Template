@@ -79,7 +79,7 @@ ui <- page_sidebar(
 
         # Item 3
         layout_columns(
-          col_widths = c(1,6,5),
+          col_widths = c(1, 6, 5),
           checkboxInput("select_viz3", NULL, value = FALSE),
           img(src = "https://via.placeholder.com/120x80.png?text=Scholarly",
               class = "img-fluid img-thumbnail"),
@@ -95,10 +95,30 @@ ui <- page_sidebar(
 )
 
 server <- function(input, output, session) {
+  file_path <- "apr_template_GEOG.docx"
 
+  if (file.exists(file_path)) {
+    success <- file.remove(file_path)
+    if (success) {
+      message("File successfully deleted.")
+    } else {
+      warning("Failed to delete file. Check file permissions or access locks.")
+    }
+  } else {
+    message("File does not exist.")
+  }
   table1_data <- reactive({
     req(input$selectDepartment)
     readMetricsLocal(input$selectDepartment)
+  })
+
+  # Reactive list capturing state of visualization checkboxes
+  selected_visualizations <- reactive({
+    list(
+      retention_trend = isTRUE(input$select_viz1),
+      degrees_awarded = isTRUE(input$select_viz2),
+      scholarly_output = isTRUE(input$select_viz3)
+    )
   })
 
   chart1 <- reactive({
@@ -106,18 +126,13 @@ server <- function(input, output, session) {
     create5yrTrendRetentionChart(table1_data(), input$selectDepartment, input$degreesIncluded)
   })
 
-  output$chart1Output <- renderPlot({
-    chart1()
-  })
-
   chart2 <- reactive({
     req(table1_data(), input$selectDepartment, input$degreesIncluded)
     create5yrDegreesAwardedChart(table1_data(), input$selectDepartment, input$degreesIncluded)
   })
 
-  output$chart2Output <- renderPlot({
-    chart2()
-  })
+  output$chart1Output <- renderPlot({ chart1() })
+  output$chart2Output <- renderPlot({ chart2() })
 
   docx_exists <- reactivePoll(
     1000, session,
@@ -143,9 +158,12 @@ server <- function(input, output, session) {
       quarto::quarto_render(
         input = theQuartoInputFile,
         output_file = theOutputFile,
-        execute_params = createQMD_parameterList_for_APR(input$selectDepartment,
-                                                         input$degreesIncluded,
-                                                         table1_data())
+        execute_params = createQMD_parameterList_for_APR(
+          input$selectDepartment,
+          input$degreesIncluded,
+          table1_data(),
+          selected_visualizations()
+        )
       )
       incProgress(0.5, detail = "Finished!")
     })
@@ -176,7 +194,8 @@ server <- function(input, output, session) {
           execute_params = createQMD_parameterList_for_APR(
             input$selectDepartment,
             input$degreesIncluded,
-            table1_data()
+            table1_data(),
+            selected_visualizations()
           )
         )
       }
