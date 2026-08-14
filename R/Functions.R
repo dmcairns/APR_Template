@@ -176,4 +176,29 @@ create5yrDegreesAwardedChart <- function(inData, inDept, inPrograms) {
     ggplot2::labs(y = "Degrees Conferred", fill = "Program")
 }
 
+################################################
+# Functions for Drop Downs                     #
+################################################
 
+createAcademicDepartmentList <- function(dbServerName="sql-rptdata.as.tamu.edu",
+                                         dbName = "WAREHOUSE",
+                                         tableName = "CURRENT_DEPARTMENTS"){
+  ##################################
+  # Accesses table CURRENT_DEPARTMENTS in
+  # database sql-rptdata.as.tamu.edu
+  theColleges <- c("AT","DN", "BA", "ED", "EN", "AR", "AG", "GB", "NU", "PH", "MD", "VM", "PV")
+  activeReviews <- NULL
+  dbConn <- DBFunctionsTAMU::createDBConnection_abpa(dbServerName, dbName)
+  allDepartments <- DBI::dbGetQuery(dbConn, glue::glue("SELECT * FROM {tableName}"))
+  academicDepartments <- allDepartments %>%
+    filter(COLLEGE_CODE %in% theColleges) %>%
+    filter(grepl("^[[:alpha:]]+$", DEPT_ABBR)) %>%
+    select(DEPT_ABBR, COLLEGE_CODE) %>%
+    arrange(COLLEGE_CODE, DEPT_ABBR) %>%
+    unique()
+
+  # Filter out anything that is numbers only
+
+  academicDepartments
+
+}
