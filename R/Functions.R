@@ -202,3 +202,26 @@ createAcademicDepartmentList <- function(dbServerName="sql-rptdata.as.tamu.edu",
   academicDepartments
 
 }
+
+createDegreeList <- function(dbServerName="sql-rptdata.as.tamu.edu",
+                                         dbName = "WAREHOUSE",
+                                         tableName = "current_deginventory",
+                                         inDept){
+  ##################################
+  # Accesses table current_deginventory in
+  # database sql-rptdata.as.tamu.edu
+
+  dbConn <- DBFunctionsTAMU::createDBConnection_abpa(dbServerName, dbName)
+  allDegreeInventory <- DBI::dbGetQuery(dbConn, glue::glue("SELECT * FROM {tableName}"))
+  DBI::dbDisconnect(dbConn)
+
+  deptDegreeInventory <- allDegreeInventory %>%
+    filter(Ddept %in% inDept) %>%
+    select("Ddept", "Deg_Program", "MAJOR", "Degree") %>%
+    mutate(degreeCode = glue::glue("{stringr::str_trim(Degree)}-{MAJOR}")) %>%
+    arrange(degreeCode)
+
+
+  deptDegreeInventory
+
+}

@@ -13,12 +13,11 @@ ui <- page_sidebar(
   sidebar = sidebar(
     selectInput("selectDepartment",
                 "Department",
-                choices = c("GEOG", "OCNG"),
+                choices = createAcademicDepartmentList(),
                 selected = "GEOG"),
     selectInput("degreesIncluded",
                 "Degrees Included in Review",
-                choices = c("BS-GEOG", "BS-GIST", "MGSC", "MS", "PHD"),
-                selected = c("BS-GEOG", "BS-GIST", "MGSC", "MS", "PHD"),
+                choices = NULL,
                 multiple = TRUE)
   ),
 
@@ -168,7 +167,23 @@ server <- function(input, output, session) {
       incProgress(0.5, detail = "Finished!")
     })
   })
+  observeEvent(input$selectDepartment, {
+    req(input$selectDepartment)
 
+    # Fetch the degree inventory for the selected department
+    degInventory <- createDegreeList(inDept = input$selectDepartment)
+
+    # Extract the degreeCode vector created by createDegreeList
+    degreeChoices <- degInventory$degreeCode
+
+    # Update the selectInput dropdown choices
+    updateSelectInput(
+      session,
+      inputId = "degreesIncluded",
+      choices = degreeChoices,
+      selected = degreeChoices # Optional: pre-selects choices if multiple = TRUE
+    )
+  })
   output$Table1 <- gt::render_gt({
     req(table1_data())
     createTable1(table1_data(), input$selectDepartment, "BS-GEOG")
